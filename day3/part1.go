@@ -40,6 +40,11 @@ func NewSegment(segment string, start image.Point) Segment {
 	return s
 }
 
+func (s Segment) ManhattanDistance(point image.Point) int {
+	//|x1 – x2| + |y1 – y2|
+	return int(math.Abs(float64((s.Stop.X - point.X) + (s.Stop.Y - point.Y))))
+}
+
 func (s Segment) SetStop(relativeTo image.Point) {
 	s.Stop = s.RelativeTo(relativeTo)
 }
@@ -110,45 +115,6 @@ func (s Segment) minMaxY() (min int, max int) {
 	return
 }
 
-//func segmentsIntersect(seg1 Segment, seg2 Segment) (bool, image.Point) {
-//	// x axis muyst be within y
-//
-//
-//
-//	if seg1.Start.X <= seg2.Stop.X && seg2.Start.X <= seg1.Stop.X &&
-//		seg1.Start.Y >= seg2.Stop.Y {
-//
-//		return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg1.Start.Y}
-//	}
-//	if seg1.Start.Y <= seg2.Stop.Y && seg2.Start.Y <= seg1.Stop.Y {
-//		return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg1.Start.Y}
-//	}
-//
-//	//if seg1.Start.Y < seg2.Stop.Y && seg2.Start.Y < seg1.Stop.Y {
-//	//	return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg2.Start.Y}
-//	//}
-//
-//	//if seg1.Start.X > seg2.Start.X && seg1.Start.X < seg2.Stop.X {
-//	//  return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg2.Start.Y}
-//	//}
-//	//
-//	//if seg2.Start.X > seg1.Start.X && seg2.Start.X < seg1.Stop.X {
-//	//  return true, image.Point{X: seg1.Stop.X - seg2.Start.X, Y: seg1.Start.Y}
-//	//}
-//	//
-//	//if seg1.Start.Y > seg2.Start.Y && seg1.Start.Y < seg2.Stop.Y {
-//	//  return true, image.Point{Y: seg2.Stop.Y - seg1.Start.Y, X: seg2.Start.X}
-//	//}
-//	//if seg2.Start.Y > seg1.Start.Y && seg2.Start.Y < seg1.Stop.Y {
-//	//  return true, image.Point{Y: seg1.Stop.Y - seg2.Start.Y, X: seg1.Start.X}
-//	//}
-//	return false, image.Point{}
-//}
-
-func opositeDirections(seg1 Segment, seg2 Segment) bool {
-	return seg1.Polarisation != seg2.Polarisation
-}
-
 type Wire struct {
 	Segments []Segment
 }
@@ -171,6 +137,37 @@ func Distance(w1 Wire, w2 Wire) int {
 	return distances[0]
 }
 
+func Steps(w1 Wire, w2 Wire) int {
+	steps := make([]int, 0, 10)
+
+	w1Steps := 0
+	for i, seg1 := range w1.Segments {
+		w1Steps = w1Steps + seg1.Length
+
+		w2Steps := 0
+		for j, seg2 := range w2.Segments {
+
+			w2Steps = w2Steps + seg2.Length
+			intersects, p := seg1.intersects(seg2)
+			if intersects {
+				//|x1 – x2| + |y1 – y2|
+
+				distance1 := seg1.ManhattanDistance(p)
+				distance2 := seg2.ManhattanDistance(p)
+				numSteps := w1Steps + w2Steps - distance1 - distance2
+				log.Printf("Found intersection at %v", p)
+				log.Printf("Found intersection idx  i:%v j:%v", i, j)
+				steps = append(steps, numSteps)
+			}
+		}
+	}
+	sort.Ints(steps)
+	if len(steps) == 0 {
+		return -1
+	}
+	return steps[0]
+}
+
 func NewWire(wire string) Wire {
 	newWire := Wire{Segments: make([]Segment, 0, 10)}
 
@@ -182,19 +179,3 @@ func NewWire(wire string) Wire {
 	}
 	return newWire
 }
-
-//
-//func (w Wire) Distance() (x int, y int) {
-// for _, segment := range w.Segments {
-//   if segment.Direction == 'R' {
-//     x = x + segment.Length
-//   } else if segment.Direction == 'L' {
-//     x = x - segment.Length
-//   } else if segment.Direction == 'U' {
-//     y = y + segment.Length
-//   } else if segment.Direction == 'D' {
-//     y = y - segment.Length
-//   }
-// }
-// return
-//}

@@ -9,7 +9,7 @@ import (
 // TODO What about parallel lines?
 func TestSegment_not_intersects(t *testing.T) {
 	segment1 := NewSegment("R10", image.Point{})
-	segment2 := NewSegment("D10", image.Point{X: 10, Y: 5})
+	segment2 := NewSegment("D10", image.Point{X: 11, Y: 5})
 
 	intersects, p := segment1.intersects(segment2)
 	if intersects {
@@ -117,20 +117,58 @@ func TestDistance(t *testing.T) {
 			w1: Wire{},
 			w2: Wire{},
 		}, want: -1},
-		{name: "distane 159", args: args{
+		{name: "distance 159", args: args{
 			w1: NewWire("R75,D30,R83,U83,L12,D49,R71,U7,L72"),
 			w2: NewWire("U62,R66,U55,R34,D71,R55,D58,R83"),
 		}, want: 159},
 
-		{name: "distane 159", args: args{
+		{name: "distance 135", args: args{
 			w1: NewWire("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"),
 			w2: NewWire("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"),
-		}, want: 159},
+		}, want: 135},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Distance(tt.args.w1, tt.args.w2); got != tt.want {
+				t.Errorf("Distance() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSteps(t *testing.T) {
+	type args struct {
+		w1 Wire
+		w2 Wire
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{name: "steps empty", args: args{
+			w1: Wire{},
+			w2: Wire{},
+		}, want: -1},
+		{name: "steps 30", args: args{
+			w1: NewWire("R8,U5,L5,D3"),
+			w2: NewWire("U7,R6,D4,L4"),
+		}, want: 30},
+		{name: "steps 610", args: args{
+			w1: NewWire("R75,D30,R83,U83,L12,D49,R71,U7,L72"),
+			w2: NewWire("U62,R66,U55,R34,D71,R55,D58,R83"),
+		}, want: 610},
+
+		{name: "steps 410", args: args{
+			w1: NewWire("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"),
+			w2: NewWire("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"),
+		}, want: 410},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Steps(tt.args.w1, tt.args.w2); got != tt.want {
 				t.Errorf("Distance() = %v, want %v", got, tt.want)
 			}
 		})
