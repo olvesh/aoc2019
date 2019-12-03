@@ -11,15 +11,15 @@ func TestSegment_not_intersects(t *testing.T) {
 	segment1 := NewSegment("R10", image.Point{})
 	segment2 := NewSegment("D10", image.Point{X: 10, Y: 5})
 
-	intersects, _ := segment1.intersects(segment2)
+	intersects, p := segment1.intersects(segment2)
 	if intersects {
-		t.Logf("%+v did not intersect %+v", segment1, segment2)
+		t.Logf("%+v did not intersect %+v at %+v", segment1, segment2, p)
 		t.Fail()
 	}
 
-	intersects, _ = segment2.intersects(segment1)
+	intersects, p = segment2.intersects(segment1)
 	if intersects {
-		t.Logf("%+v did not intersect %+v", segment1, segment2)
+		t.Logf("%+v did not intersect %+v at %+v", segment1, segment2, p)
 		t.Fail()
 	}
 
@@ -140,8 +140,8 @@ func TestDistance(t *testing.T) {
 func TestSegment_intersects1(t *testing.T) {
 
 	type args struct {
-		seg2 Segment
 		seg1 Segment
+		seg2 Segment
 	}
 	tests := []struct {
 		name  string
@@ -152,11 +152,30 @@ func TestSegment_intersects1(t *testing.T) {
 		{
 			name: "(0,0)/(0,75) vs (66,62)/(66,117)",
 			args: args{
-				seg2: NewSegment("R75", image.Point{}),
 				seg1: NewSegment("U55", image.Point{X: 66, Y: 62}),
+				seg2: NewSegment("R75", image.Point{}),
 			},
 			want:  false,
 			want1: image.Point{},
+		},
+		{
+			name: "(0,0)/(0,10) vs (5,5)/(5,-5)",
+			args: args{
+				seg1: NewSegment("D10", image.Point{X: 5, Y: 5}),
+				seg2: NewSegment("R10", image.Point{}),
+			},
+			want:  true,
+			want1: image.Point{5, 0},
+		},
+
+		{
+			name: "(5,5)/(5,-5) vs (0,0)/(0,10) ",
+			args: args{
+				seg1: NewSegment("R10", image.Point{}),
+				seg2: NewSegment("D10", image.Point{X: 5, Y: 5}),
+			},
+			want:  true,
+			want1: image.Point{5, 0},
 		},
 	}
 	for _, tt := range tests {

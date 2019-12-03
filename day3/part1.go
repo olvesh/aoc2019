@@ -15,7 +15,6 @@ type Segment struct {
 	Length       int
 	Start        image.Point
 	Stop         image.Point
-	rect         image.Rectangle
 }
 
 const hor = "RL"
@@ -36,10 +35,6 @@ func NewSegment(segment string, start image.Point) Segment {
 		s.Polarisation = hor
 	} else {
 		s.Polarisation = ver
-	}
-	s.rect = image.Rectangle{
-		Min: start,
-		Max: s.Stop,
 	}
 
 	return s
@@ -63,40 +58,92 @@ func (s Segment) RelativeTo(point image.Point) image.Point {
 }
 
 func (s Segment) intersects(seg2 Segment) (bool, image.Point) {
-	if opositeDirections(s, seg2) {
+	intersects, point := segmentsIntersects(s, seg2)
+	if (point == image.Point{}) {
+		return false, image.Point{}
+	}
+	return intersects, point
 
-		if b, point := pointsIntersect(s, seg2); b {
-			return b, point
+	////if opositeDirections(s, seg2) {
+	////
+	//if b, point := segmentsIntersects(s, seg2); b {
+	//	return b, point
+	//}
+	//if b, point := segmentsIntersects(seg2, s); b {
+	//	return b, point
+	//}
+	////}
+	//return false, image.Point{}
+}
+
+func segmentsIntersects(seg1 Segment, seg2 Segment) (bool, image.Point) {
+	if seg1.Polarisation == hor && seg2.Polarisation == ver {
+		minY, maxY := seg2.minMaxY()
+		if seg1.Start.Y >= minY && seg1.Start.Y <= maxY {
+			minX, maxX := seg1.minMaxX()
+			if minX <= seg2.Start.X && maxX >= seg2.Start.X {
+				return true, image.Point{seg2.Start.X, seg1.Start.Y}
+			}
 		}
-		if b, point := pointsIntersect(seg2, s); b {
-			return b, point
+	}
+
+	if seg1.Polarisation == ver && seg2.Polarisation == hor {
+		minX, maxX := seg2.minMaxX()
+		if seg1.Start.X >= minX && seg1.Start.X <= maxX {
+			minY, maxY := seg1.minMaxY()
+			if minY <= seg2.Start.Y && maxY >= seg2.Start.Y {
+				return true, image.Point{seg1.Start.X, seg2.Start.Y}
+			}
 		}
 	}
 	return false, image.Point{}
 }
 
-func pointsIntersect(seg1 Segment, seg2 Segment) (bool, image.Point) {
-	if seg1.Start.X < seg2.Stop.X && seg2.Start.X < seg1.Stop.X ||
-		seg1.Start.Y < seg2.Stop.Y && seg2.Start.Y < seg1.Stop.Y {
-		return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg2.Start.Y}
-	}
-
-	//if seg1.Start.X > seg2.Start.X && seg1.Start.X < seg2.Stop.X {
-	//  return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg2.Start.Y}
-	//}
-	//
-	//if seg2.Start.X > seg1.Start.X && seg2.Start.X < seg1.Stop.X {
-	//  return true, image.Point{X: seg1.Stop.X - seg2.Start.X, Y: seg1.Start.Y}
-	//}
-	//
-	//if seg1.Start.Y > seg2.Start.Y && seg1.Start.Y < seg2.Stop.Y {
-	//  return true, image.Point{Y: seg2.Stop.Y - seg1.Start.Y, X: seg2.Start.X}
-	//}
-	//if seg2.Start.Y > seg1.Start.Y && seg2.Start.Y < seg1.Stop.Y {
-	//  return true, image.Point{Y: seg1.Stop.Y - seg2.Start.Y, X: seg1.Start.X}
-	//}
-	return false, image.Point{}
+func (s Segment) minMaxX() (min int, max int) {
+	min = int(math.Min(float64(s.Start.X), float64(s.Stop.X)))
+	max = int(math.Max(float64(s.Start.X), float64(s.Stop.X)))
+	return
 }
+func (s Segment) minMaxY() (min int, max int) {
+	min = int(math.Min(float64(s.Start.Y), float64(s.Stop.Y)))
+	max = int(math.Max(float64(s.Start.Y), float64(s.Stop.Y)))
+	return
+}
+
+//func segmentsIntersect(seg1 Segment, seg2 Segment) (bool, image.Point) {
+//	// x axis muyst be within y
+//
+//
+//
+//	if seg1.Start.X <= seg2.Stop.X && seg2.Start.X <= seg1.Stop.X &&
+//		seg1.Start.Y >= seg2.Stop.Y {
+//
+//		return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg1.Start.Y}
+//	}
+//	if seg1.Start.Y <= seg2.Stop.Y && seg2.Start.Y <= seg1.Stop.Y {
+//		return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg1.Start.Y}
+//	}
+//
+//	//if seg1.Start.Y < seg2.Stop.Y && seg2.Start.Y < seg1.Stop.Y {
+//	//	return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg2.Start.Y}
+//	//}
+//
+//	//if seg1.Start.X > seg2.Start.X && seg1.Start.X < seg2.Stop.X {
+//	//  return true, image.Point{X: seg2.Stop.X - seg1.Start.X, Y: seg2.Start.Y}
+//	//}
+//	//
+//	//if seg2.Start.X > seg1.Start.X && seg2.Start.X < seg1.Stop.X {
+//	//  return true, image.Point{X: seg1.Stop.X - seg2.Start.X, Y: seg1.Start.Y}
+//	//}
+//	//
+//	//if seg1.Start.Y > seg2.Start.Y && seg1.Start.Y < seg2.Stop.Y {
+//	//  return true, image.Point{Y: seg2.Stop.Y - seg1.Start.Y, X: seg2.Start.X}
+//	//}
+//	//if seg2.Start.Y > seg1.Start.Y && seg2.Start.Y < seg1.Stop.Y {
+//	//  return true, image.Point{Y: seg1.Stop.Y - seg2.Start.Y, X: seg1.Start.X}
+//	//}
+//	return false, image.Point{}
+//}
 
 func opositeDirections(seg1 Segment, seg2 Segment) bool {
 	return seg1.Polarisation != seg2.Polarisation
