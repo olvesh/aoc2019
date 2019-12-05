@@ -11,11 +11,15 @@ import (
 )
 
 const (
-	ADD    = 1
-	MULT   = 2
-	INPUT  = 3
-	OUTPUT = 4
-	END    = 99
+	ADD           = 1
+	MULT          = 2
+	INPUT         = 3
+	OUTPUT        = 4
+	JUMP_IF_TRUE  = 5
+	JUMP_IF_FALSE = 6
+	LESS_THAN     = 7
+	EQUALS        = 8
+	END           = 99
 )
 
 var (
@@ -59,6 +63,57 @@ var (
 			fmt.Println("Output: ", intops[outPos])
 
 			return i + 2
+		},
+		JUMP_IF_TRUE: func(i int, intops map[int]int, mode paramMode) int {
+
+			testVal := mode.valueFor(1, intops[i+1], intops)
+			if testVal != 0 {
+				return mode.valueFor(2, intops[i+2], intops)
+			}
+
+			return i + 3
+
+		},
+
+		JUMP_IF_FALSE: func(i int, intops map[int]int, mode paramMode) int {
+
+			testVal := mode.valueFor(1, intops[i+1], intops)
+			if testVal == 0 {
+				return mode.valueFor(2, intops[i+2], intops)
+			}
+
+			return i + 3
+
+		},
+		LESS_THAN: func(i int, intops map[int]int, mode paramMode) int {
+
+			testVal1 := mode.valueFor(1, intops[i+1], intops)
+			testVal2 := mode.valueFor(2, intops[i+2], intops)
+			outpos := intops[i+3]
+
+			if testVal1 < testVal2 {
+				intops[outpos] = 1
+			} else {
+				intops[outpos] = 0
+			}
+
+			return i + 4
+
+		},
+
+		EQUALS: func(i int, intops map[int]int, mode paramMode) int {
+
+			testVal1 := mode.valueFor(1, intops[i+1], intops)
+			testVal2 := mode.valueFor(2, intops[i+2], intops)
+			outpos := intops[i+3]
+			if testVal1 == testVal2 {
+				intops[outpos] = 1
+			} else {
+				intops[outpos] = 0
+			}
+
+			return i + 4
+
 		},
 
 		END: func(i int, intops map[int]int, mode paramMode) int { return -1 },
@@ -130,19 +185,19 @@ var mapify = func(intopsProgram []int) map[int]int {
 	return m
 }
 
-func CalcIntOpsSlice(intops []int) []int {
+func CalcIntOpsSlice(intops []int) {
 	rt := reflect.TypeOf(intops)
 	switch rt.Kind() {
 	case reflect.Array:
 		intops = intops[:]
 	}
 
-	intopsMap := CalcIntOps(mapify(intops))
-	result := make([]int, len(intopsMap))
-	for i, i2 := range intopsMap {
-		result[i] = i2
-	}
-	return result
+	CalcIntOps(mapify(intops))
+	//result := make([]int, len(intopsMap))
+	//for i, i2 := range intopsMap {
+	//  result[i] = i2
+	//}
+	//return intops
 }
 
 func CalcIntOps(intops map[int]int) map[int]int {
