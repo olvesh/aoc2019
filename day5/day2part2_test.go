@@ -40,7 +40,7 @@ func TestCalcIntOpsPart2(t *testing.T) {
 func TestResultPart2(t *testing.T) {
 	for noun := 0; noun < 100; noun = noun + 1 {
 		for verb := 0; verb < 100; verb = verb + 1 {
-			res := execIntcode(mapify(gravityAssistProgramInput), noun, verb)
+			res := execIntcode(mapify(diagnostics), noun, verb)
 			if res == 19690720 {
 				t.Logf("19690720 reached, noun: %v verb %v", noun, verb)
 				if noun != 79 && verb != 12 {

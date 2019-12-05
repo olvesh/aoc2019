@@ -6,40 +6,40 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 )
 
 const (
-	ADD            = 1
-	MULT           = 2
-	INPUT          = 3
-	OUTPUT         = 4
-	END            = 99
-
+	ADD    = 1
+	MULT   = 2
+	INPUT  = 3
+	OUTPUT = 4
+	END    = 99
 )
-
 
 var (
 	instructions = map[int]Operation{
-		ADD: func(i int, intops map[int]int) int {
+		ADD: func(i int, intops map[int]int, mode paramMode) int {
 			resultPos := intops[i+3]
-			sum1Pos := intops[i+1]
-			sum2Pos := intops[i+2]
-			sum := intops[sum1Pos] + intops[sum2Pos]
+			sum1Val := mode.valueFor(1, intops[i+1], intops)
+			sum2Val := mode.valueFor(2, intops[i+2], intops)
+
+			sum := sum1Val + sum2Val
 			intops[resultPos] = sum
 			return i + 4
 		},
-		MULT: func(i int, intops map[int]int) int {
+		MULT: func(i int, intops map[int]int, mode paramMode) int {
 			productPos := intops[i+3]
-			coefficient1Pos := intops[i+1]
-			coefficient2Pos := intops[i+2]
-			product := intops[coefficient1Pos] * intops[coefficient2Pos]
+			coeff1Val := mode.valueFor(1, intops[i+1], intops)
+			coeff2Val := mode.valueFor(2, intops[i+2], intops)
+
+			product := coeff1Val * coeff2Val
 			intops[productPos] = product
 			return i + 4
 		},
-		INPUT: func(i int, intops map[int]int) int {
+
+		INPUT: func(i int, intops map[int]int, mode paramMode) int {
 			inputPos := intops[i+1]
 
 			reader := bufio.NewReader(os.Stdin)
@@ -53,7 +53,7 @@ var (
 			intops[inputPos] = val
 			return i + 2
 		},
-		OUTPUT: func(i int, intops map[int]int) int {
+		OUTPUT: func(i int, intops map[int]int, mode paramMode) int {
 			outPos := intops[i+1]
 
 			fmt.Println("Output: ", intops[outPos])
@@ -61,31 +61,60 @@ var (
 			return i + 2
 		},
 
-		END: func(i int, intops map[int]int) int { return -1 },
+		END: func(i int, intops map[int]int, mode paramMode) int { return -1 },
 	}
 )
 
 type Instruction struct {
-	opcode Operation
+	opcode     Operation
 	paramModes []int
 }
-//
+
 func NewInstruction(inst int) Instruction {
-	instruction := strconv.Itoa(inst)
-	if len(instruction) < 3 {
+	newInstruction := Instruction{paramModes: []int{0, 0, 0, 0}}
+	stringOpCode := strconv.Itoa(inst)
+	if len(stringOpCode) < 3 {
 		// Only params
-		atoi, _ := strconv.Atoi(instruction)
-		return Instruction{opcode: instructions[atoi]}
+		atoi, _ := strconv.Atoi(stringOpCode)
+		newInstruction.opcode = instructions[atoi]
+
 	} else {
-		opcode, _ := strconv.Atoi(instruction[len(instruction)-2:])
-		paramModes := instruction[:len(instruction)-2]
-		for i:= len(paramModes);
+		opcode, _ := strconv.Atoi(stringOpCode[len(stringOpCode)-2:])
+		newInstruction.opcode = instructions[opcode]
+		paramModes := stringOpCode[:len(stringOpCode)-2]
+
+		for i, j := len(paramModes)-1, 0; i >= 0; i, j = i-1, j+1 {
+			newInstruction.paramModes[j], _ = strconv.Atoi(paramModes[i : i+1])
+		}
 
 	}
-
+	return newInstruction
 }
 
-type Operation func(i int, intops map[int]int) int
+type paramMode []int
+
+func (m paramMode) valueFor(paramIdx int, paramValue int, intops map[int]int) int {
+	mode := m.idx(paramIdx)
+	if mode == 0 {
+		return intops[paramValue]
+	} else if mode == 1 {
+		return paramValue
+	}
+
+	return 0
+}
+func (m paramMode) idx(i int) int {
+	i = i - 1
+	if i >= 0 && i < len(m) {
+		return m[i]
+	}
+	return 0
+}
+
+type Operation func(i int, intops map[int]int, mode paramMode) int
+
+//type OperationMode func(i int, intops map[int]int) int
+
 //
 //type Instruction struct {
 //	Opcode    int
@@ -118,9 +147,11 @@ func CalcIntOpsSlice(intops []int) []int {
 
 func CalcIntOps(intops map[int]int) map[int]int {
 	for i := 0; i != -1 && i < len(intops); {
-		instruction := intops[i]
-		operation := instructions[instruction]
-		i = operation(i, intops)
+		inst := NewInstruction(intops[i])
+
+		//instruction := intops[i]
+		//operation := instructions[instruction]
+		i = inst.opcode(i, intops, inst.paramModes)
 
 	}
 	return intops
