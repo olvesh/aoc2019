@@ -1,14 +1,25 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
 	"reflect"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 const (
-	ADD  = 1
-	MULT = 2
-	END  = 99
+	ADD            = 1
+	MULT           = 2
+	INPUT          = 3
+	OUTPUT         = 4
+	END            = 99
+
 )
+
 
 var (
 	instructions = map[int]Operation{
@@ -28,17 +39,59 @@ var (
 			intops[productPos] = product
 			return i + 4
 		},
+		INPUT: func(i int, intops map[int]int) int {
+			inputPos := intops[i+1]
+
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("Input: ")
+			text, _ := reader.ReadString('\n')
+			val, err := strconv.Atoi(strings.TrimSuffix(text, "\n"))
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			intops[inputPos] = val
+			return i + 2
+		},
+		OUTPUT: func(i int, intops map[int]int) int {
+			outPos := intops[i+1]
+
+			fmt.Println("Output: ", intops[outPos])
+
+			return i + 2
+		},
+
 		END: func(i int, intops map[int]int) int { return -1 },
 	}
 )
 
-type Operation func(i int, intops map[int]int) int
-
 type Instruction struct {
-	Opcode    int
-	NumParams int
-	apply     func(int, map[int]int)
+	opcode Operation
+	paramModes []int
 }
+//
+func NewInstruction(inst int) Instruction {
+	instruction := strconv.Itoa(inst)
+	if len(instruction) < 3 {
+		// Only params
+		atoi, _ := strconv.Atoi(instruction)
+		return Instruction{opcode: instructions[atoi]}
+	} else {
+		opcode, _ := strconv.Atoi(instruction[len(instruction)-2:])
+		paramModes := instruction[:len(instruction)-2]
+		for i:= len(paramModes);
+
+	}
+
+}
+
+type Operation func(i int, intops map[int]int) int
+//
+//type Instruction struct {
+//	Opcode    int
+//	NumParams int
+//	apply     func(int, map[int]int)
+//}
 
 var mapify = func(intopsProgram []int) map[int]int {
 	m := make(map[int]int, len(intopsProgram))

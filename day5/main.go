@@ -13,22 +13,8 @@ var gravityAssistProgram = func() map[int]int {
 }
 
 func main() {
-
-	noun := 12
-	verb := 2
-
-	res := execIntcode(gravityAssistProgram(), noun, verb)
-
-	log.Printf("Intops #1: %v", res)
-
-	for noun := 0; noun < 100; noun = noun + 1 {
-		for verb := 0; verb < 100; verb = verb + 1 {
-			res := execIntcode(gravityAssistProgram(), noun, verb)
-			if res == 19690720 {
-				log.Printf("19690720 reached, noun: %v verb %v", noun, verb)
-			}
-		}
-	}
+	slice := CalcIntOpsSlice([]int{3, 0, 4, 0, 99})
+	log.Printf("result: %v", slice)
 }
 
 func execIntcode(intcodeProgram map[int]int, noun int, verb int) int {
