@@ -11,6 +11,11 @@ type MassMap struct {
 	idx map[string]*Mass
 }
 
+func (m MassMap) distance(id1, id2 string) int {
+	mass1, mass2 := m.idx[id1], m.idx[id2]
+	return mass1.distance(mass2)
+}
+
 func (m *MassMap) add(s string) {
 	orbit := strings.Split(s, ")")
 
@@ -44,8 +49,6 @@ func (m Mass) String() string {
 	return fmt.Sprintf("%s inorb: %v", len(m.InOrbit))
 }
 
-type OrbitCount int
-
 func (m *Mass) NumDirectAndIndirect() int {
 	num := m.walk(0)
 	return num
@@ -69,5 +72,26 @@ func (m Mass) walk(depth int) int {
 
 	}
 	return depth
+}
 
+func (m *Mass) pathToCom() (path []string) {
+
+	for mass := m.Orbits; mass != nil; mass = mass.Orbits {
+		path = append(path, mass.Id)
+	}
+
+	return
+}
+
+func (m Mass) distance(mass2 *Mass) int {
+	path1, path2 := m.pathToCom(), mass2.pathToCom()
+
+	for i, s := range path1 {
+		for i2, s2 := range path2 {
+			if s == s2 {
+				return i + i2
+			}
+		}
+	}
+	return -1
 }

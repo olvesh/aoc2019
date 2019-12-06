@@ -23,6 +23,20 @@ E)J
 J)K
 K)L`
 
+const testDistanceOrbits = `COM)B
+B)C
+C)D
+D)E
+E)F
+B)G
+G)H
+D)I
+E)J
+J)K
+K)L
+K)YOU
+I)SAN`
+
 func main() {
 
 	puzzle, err := os.Open("./day6/puzzle.txt")
@@ -36,8 +50,9 @@ func main() {
 
 	massMap := NewMassFromReader(puzzle)
 
-	//massMap := NewMassMapStrings(testOrbits)
+	//massMap := NewMassMapStrings(testDistanceOrbits)
 	log.Print(massMap.COM.NumDirectAndIndirect())
+	log.Print(massMap.distance("YOU", "SAN"))
 }
 
 func NewMassFromReader(puzzle *os.File) *MassMap {
