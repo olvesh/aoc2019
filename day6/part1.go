@@ -1,6 +1,10 @@
 package main
 
-import "strings"
+import (
+	"fmt"
+	"log"
+	"strings"
+)
 
 type MassMap struct {
 	COM *Mass
@@ -12,17 +16,20 @@ func (m *MassMap) add(s string) {
 
 	if _, ok := m.idx[orbit[0]]; !ok {
 		// this is the senter of gravity
-		m.idx[orbit[0]] = &Mass{Id: orbit[0]}
+		m.idx[orbit[0]] = &Mass{
+			Id:      orbit[0],
+			InOrbit: make([]*Mass, 0),
+		}
 
 		if orbit[0] == "COM" {
 			m.COM = m.idx[orbit[0]]
 		}
 	}
+	if _, ok := m.idx[orbit[1]]; !ok {
+		m.idx[orbit[1]] = &Mass{Id: orbit[1], InOrbit: make([]*Mass, 0)}
+	}
 
-	mass := &Mass{Id: orbit[1], InOrbit: make([]*Mass, 0)}
-
-	m.idx[orbit[0]].AddInOrbit(mass)
-	m.idx[orbit[1]] = mass
+	m.idx[orbit[0]].AddInOrbit(m.idx[orbit[1]])
 
 }
 
@@ -31,6 +38,10 @@ type Mass struct {
 
 	Orbits  *Mass
 	InOrbit []*Mass
+}
+
+func (m Mass) String() string {
+	return fmt.Sprintf("%s inorb: %v", len(m.InOrbit))
 }
 
 type OrbitCount int
@@ -49,6 +60,8 @@ func (m Mass) walk(depth int) int {
 	if m.Id != "COM" {
 		depth++
 	}
+	pad := fmt.Sprintf("%%%ds", depth)
+	log.Printf(pad, m.Id)
 
 	currentDepth := depth
 	for _, inOrbit := range m.InOrbit {
