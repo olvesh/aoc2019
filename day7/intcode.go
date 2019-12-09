@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	instructions = map[int]Operation{
+	ops = map[int]Operation{
 		Add: func(i int, intops map[int]int, mode paramMode) int {
 			resultPos := intops[i+3]
 			sum1Val := mode.valueFor(1, intops[i+1], intops)
@@ -121,7 +121,7 @@ func StdInIn() int {
 	text, _ := reader.ReadString('\n')
 	val, err := strconv.Atoi(strings.TrimSuffix(text, "\n"))
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	return val
 }
@@ -140,17 +140,20 @@ type Instruction struct {
 	paramModes []int
 }
 
-func NewInstruction(inst int) Instruction {
+func (ic IntcodeComputer) NewInstruction(inst int) Instruction {
+	return newInstruction(inst, ic.operations)
+}
+func newInstruction(inst int, operations map[int]Operation) Instruction {
 	newInstruction := Instruction{paramModes: []int{0, 0, 0, 0}}
 	stringOpCode := strconv.Itoa(inst)
 	if len(stringOpCode) < 3 {
 		// Only params
 		atoi, _ := strconv.Atoi(stringOpCode)
-		newInstruction.opcode = instructions[atoi]
+		newInstruction.opcode = operations[atoi]
 
 	} else {
 		opcode, _ := strconv.Atoi(stringOpCode[len(stringOpCode)-2:])
-		newInstruction.opcode = instructions[opcode]
+		newInstruction.opcode = operations[opcode]
 		paramModes := stringOpCode[:len(stringOpCode)-2]
 
 		for i, j := len(paramModes)-1, 0; i >= 0; i, j = i-1, j+1 {
@@ -199,7 +202,7 @@ func NewIntcodeComputer(intops []int) IntcodeComputer {
 		intops = intops[:]
 	}
 
-	return IntcodeComputer{rawInstructions: intops, operations: instructions}
+	return IntcodeComputer{rawInstructions: intops, operations: ops}
 	//result := make([]int, len(intopsMap))
 	//for i, i2 := range intopsMap {
 	//  result[i] = i2
@@ -215,14 +218,14 @@ func NewIntcodeComputerOverrideInOut(intops []int, in In, out Out) IntcodeComput
 	}
 	operationsMap := make(map[int]Operation, len(intops))
 	// Copy from the original map to the target map
-	for key, value := range instructions {
+	for key, value := range ops {
 		operationsMap[key] = value
 	}
 
 	operationsMap[Input] = createInput(in)
 	operationsMap[Output] = createOutput(out)
 
-	return IntcodeComputer{rawInstructions: intops}
+	return IntcodeComputer{rawInstructions: intops, operations: operationsMap}
 	//result := make([]int, len(intopsMap))
 	//for i, i2 := range intopsMap {
 	//  result[i] = i2
@@ -237,8 +240,8 @@ type IntcodeComputer struct {
 	rawInstructions []int
 	operations      map[int]Operation
 
-	inputFunc  In
-	outputFunc Out
+	//inputFunc  In
+	//outputFunc Out
 }
 
 func (ic IntcodeComputer) mapify() map[int]int {
@@ -253,7 +256,7 @@ func (ic *IntcodeComputer) Exec() map[int]int {
 	intops := ic.mapify()
 
 	for i := 0; i != -1 && i < len(intops); {
-		inst := NewInstruction(intops[i])
+		inst := ic.NewInstruction(intops[i])
 
 		//instruction := intops[i]
 		//operation := instructions[instruction]

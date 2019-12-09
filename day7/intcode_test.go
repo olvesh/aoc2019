@@ -45,14 +45,14 @@ func TestNewInstruction(t *testing.T) {
 			args: args{inst: 1101},
 			want: Instruction{
 				paramModes: []int{1, 1, 0, 0},
-				opcode:     instructions[1],
+				opcode:     ops[1],
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewInstruction(tt.args.inst); &got.opcode != &tt.want.opcode || !reflect.DeepEqual(got.paramModes, tt.want.paramModes) {
-				t.Errorf("NewInstruction() = %v, want %v", got, tt.want)
+			if got := newInstruction(tt.args.inst, ops); &got.opcode != &tt.want.opcode || !reflect.DeepEqual(got.paramModes, tt.want.paramModes) {
+				t.Errorf("newInstruction() = %v, want %v", got, tt.want)
 			}
 		})
 	}
